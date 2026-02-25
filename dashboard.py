@@ -10,8 +10,8 @@ st.set_page_config(
 API_BASE = "https://qr-production-73d6.up.railway.app"
 
 st.title("📊 Dashboard de Escaneos QR")
-
-slug = st.text_input("Slug del QR", value="ANATO_BAQ")
+lista_qrs = ["ANATO_BAQ", "WSP_DIXY"]
+slug = st.selectbox("Slug del QR", options=lista_qrs)
 
 if slug:
     url = f"{API_BASE}/stats/{slug}"
@@ -30,7 +30,13 @@ if slug:
         st.warning("Aún no hay escaneos.")
         st.stop()
 
-    df["fecha"] = pd.to_datetime(df["fecha"])
+    # Convertir a datetime
+    df["fecha"] = pd.to_datetime(df["fecha"], utc=True)
+
+    # Convertir de UTC a hora de Bogotá
+    df["fecha"] = df["fecha"].dt.tz_convert("America/Bogota")
+
+    # Extraer hora ya convertida
     df["hora"] = df["fecha"].dt.hour
 
     def detectar_dispositivo(ua):
@@ -43,24 +49,21 @@ if slug:
 
     df["dispositivo"] = df["navegador"].apply(detectar_dispositivo)
 
-    col1, col2, col3, col4 = st.columns(4)
+    col1, col2, col3 = st.columns(3)
 
     col1.metric("Total escaneos", len(df))
     col2.metric("Hora pico", df["hora"].mode()[0])
-    col3.metric("Dispositivo top", df["dispositivo"].mode()[0])
-    col4.metric("Último escaneo", df["fecha"].max().strftime("%H:%M"))
+    col3.metric("Último escaneo", df["fecha"].max().strftime("%H:%M"))
 
     st.divider()
+    st.subheader("Escaneos por hora")
+ 
+    st.line_chart(df["hora"].value_counts().sort_index(),
+                    x_label="Hora del día", y_label="Número de escaneos",
+                    use_container_width=True
+                    )
 
-    c1, c2 = st.columns(2)
 
-    with c1:
-        st.subheader("Escaneos por hora")
-        st.bar_chart(df["hora"].value_counts().sort_index())
-
-    with c2:
-        st.subheader("Dispositivos")
-        st.bar_chart(df["dispositivo"].value_counts())
 
     st.divider()
 
