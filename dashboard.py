@@ -1,11 +1,15 @@
 import streamlit as st
 import pandas as pd
 import requests
+from streamlit_autorefresh import st_autorefresh
 
 st.set_page_config(
     page_title="Dashboard QR",
     layout="wide"
 )
+
+
+st_autorefresh(interval=5000, key="qr_refresh")
 
 API_BASE = "https://qr-production-73d6.up.railway.app"
 
