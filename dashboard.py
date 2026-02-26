@@ -44,8 +44,19 @@ if slug:
     df["hora"] = df["fecha"].dt.hour
     # Extraer dia    
     df["dia"] = df["fecha"].dt.day
+    dias = {
+    "Monday": "Lunes",
+    "Tuesday": "Martes",
+    "Wednesday": "Miércoles",
+    "Thursday": "Jueves",
+    "Friday": "Viernes",
+    "Saturday": "Sábado",
+    "Sunday": "Domingo"
+    }
     # Extraer dia de la semana    df["dia_semana"] = df["fecha"].dt.day_name()
-    df["dia_semana"] = df["fecha"].dt.day_name(locale="es_ES")
+    df["dia_semana"] = df["fecha"].dt.day_name().map(dias)
+    
+    
 
     def detectar_dispositivo(ua):
         if "Android" in ua:
