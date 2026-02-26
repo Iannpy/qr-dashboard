@@ -9,7 +9,7 @@ st.set_page_config(
 )
 
 
-st_autorefresh(interval=5000, key="qr_refresh")
+st_autorefresh(interval=10000, key="qr_refresh")
 
 API_BASE = "https://qr-production-73d6.up.railway.app"
 
@@ -42,6 +42,10 @@ if slug:
 
     # Extraer hora ya convertida
     df["hora"] = df["fecha"].dt.hour
+    # Extraer dia    
+    df["dia"] = df["fecha"].dt.day
+    # Extraer dia de la semana    df["dia_semana"] = df["fecha"].dt.day_name()
+    df["dia_semana"] = df["fecha"].dt.day_name(locale="es_ES")
 
     def detectar_dispositivo(ua):
         if "Android" in ua:
@@ -53,23 +57,31 @@ if slug:
 
     df["dispositivo"] = df["navegador"].apply(detectar_dispositivo)
 
-    col1, col2, col3 = st.columns(3)
+    col1, col2, col3, col4 = st.columns(4)
 
     col1.metric("Total escaneos", len(df))
     col2.metric("Hora pico", df["hora"].mode()[0])
-    col3.metric("Último escaneo", df["fecha"].max().strftime("%H:%M"))
+    col3.metric("Día pico", df["dia_semana"].mode()[0])
+    col4.metric("Último escaneo", df["fecha"].max().strftime("%H:%M"))
 
     st.divider()
     st.subheader("Escaneos por hora")
  
-    st.line_chart(df["hora"].value_counts().sort_index(),
+    dias_semana=df["dia_semana"].unique()
+    dias_selected = st.selectbox("Selecciona los días de la semana", options=dias_semana)
+    
+    df_filtrado = df[df["dia_semana"].isin([dias_selected])]
+    st.line_chart(df_filtrado["hora"].value_counts().sort_index(),
                     x_label="Hora del día", y_label="Número de escaneos",
                     use_container_width=True
                     )
-
-
-
+    
     st.divider()
+    st.subheader("Escaneos por día de la semana")
+    dias_semana_counts = df["dia_semana"].value_counts().reindex(["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"])
+    st.bar_chart(dias_semana_counts, x_label="Día de la semana", y_label="Número de escaneos", use_container_width=True)
+    st.divider()
+    
 
     st.subheader("Últimos escaneos")
     st.dataframe(
